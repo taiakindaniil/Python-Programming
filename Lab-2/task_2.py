@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 from custom_module import Matrix
-from task_3 import *
+from task_3 import rand_table
 
 def remove_items(table):
     for _ in range(10):
