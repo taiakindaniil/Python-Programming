@@ -13,7 +13,17 @@ i=0
 
 # prices for 10 months
 prices = list(df['price'][i:i+10])
-prices = util.rand_remove(prices)
+# prices = util.rand_remove(prices)
+
+# gets all prices for 10 months (hardcoded)
+def get_all_prices() -> list:
+    all_prices = []
+    for symbol in symbols:
+        df = pd.read_csv(f"./data/{symbol}.csv", sep=';', names=['date', 'price', 'change', 'cap'])
+        all_prices.append(list(df['price'][i:i+10]))
+    return all_prices
+
+
 
 # recovery methods
 # - winsoring method
@@ -51,14 +61,67 @@ def linear_approximation(data: list):
     return data_copy
 
 # - correlation
-# i is index for all_data
-def correlation(i, all_data: list):
-    # finds Pearson's coefficient matrix 
-    coef = np.corrcoef(all_data)
-    pass
+def correlation(values1, values2):
+    for i, _ in enumerate(values1):
+        if values1[i] == None:
+            if i == len(values1) - 1:
+                p1 = values1[i - 1]
+                v1 = values2[i - 1]
+                v2 = values2[i]
+                values1[i] = p1 * v1 / v2
+            else:
+                p2 = values1[i + 1]
+                v1 = values2[i]
+                v2 = values2[i + 1]
+                values1[i] = p2 * v2 / v1
+        elif values2[i] == None:
+            if i == len(values2) - 1:
+                p1 = values1[i - 1]
+                p2 = values1[i]
+                v1 = values2[i - 1]
+                values2[i] = p1 * v1 / p2
+            else:
+                p1 = values1[i]
+                p2 = values1[i + 1]
+                v2 = values2[i + 1]
+                values2[i] = p2 * v2 / p1
+    return values1, values2
+
+# print(prices)
+# print(correlation(util.rand_remove(prices), prices))
+
+
+# smoothing methods
+# - moving average with windowing
+# https://wiki.loginom.ru/articles/windowing-method.html
+def MAW(Y, k=2):
+    n = len(Y)
+    temp_Y = Y[0:k]
+    for t in range(k, n):
+        slice_Y = Y[t-k:t]
+        temp_Y.append(sum(slice_Y) / len(slice_Y))
+    return temp_Y
+
+def WMA(data):
+    data_copy = data.copy()
+
+    # количество значений исходной функции для расчёта скользящего среднего
+    n = 2
+
+    for t in range(n, len(data)):
+        sum_data = 0
+        for i in range(n):
+            sum_data += (n-i)*data[t-i]
+        
+        for i in range(n):
+            data_copy[t] = (2 / (n * (n+1))) * sum_data
+
+    return data_copy
+
 
 print(prices)
-print(linear_approximation(prices))
+print(WMA(prices))
+
 
 def App():
 
