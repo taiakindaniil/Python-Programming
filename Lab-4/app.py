@@ -153,14 +153,11 @@ def App():
         elif recovery == "Linear approximation":
             recovered_prices = linear_approximation(prices)
         elif recovery == "Correlation":
-            df = pd.read_csv(f"./data/{symbol}.csv", sep=';', names=['date', 'price', 'change', 'cap'])
+            df = pd.read_csv(f"./data/{symbol2}.csv", sep=';', names=['date', 'price', 'change', 'cap'])
             # prices for 18 months
             i=0
             prices2 = util.rand_remove(list(df['price'][i:i+18]))
             recovered_prices = correlation(prices, prices2)[0]
-
-        print(prices)
-        print(recovered_prices)
 
         antialised_prices = []
         if antialising == "Moving Average":
