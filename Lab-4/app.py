@@ -7,14 +7,6 @@ import util
 
 symbols = ["SBER", "GAZP", "TATN", "VTBR", "ALRS", "AFLT", "HYDR", "MOEX", "NLMK", "CHMF", "DSKY", "POLY", "YNDX", "AFKS", "LSRG", "LSNGP", "LKOH", "MTSS", "NVTK", "PIKK"]
 
-symbol = "SBER"
-df = pd.read_csv(f"./data/{symbol}.csv", sep=';', names=['date', 'price', 'change', 'cap'])
-i=0
-
-# prices for 10 months
-prices = list(df['price'][i:i+10])
-# prices = util.rand_remove(prices)
-
 # recovery methods
 # - winsoring method
 def winsoring(data: list):
