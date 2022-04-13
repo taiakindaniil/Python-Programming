@@ -2,10 +2,10 @@ from tkinter import *
 from config import *
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import util
 
 symbols = ["SBER", "GAZP", "TATN", "VTBR", "ALRS", "AFLT", "HYDR", "MOEX", "NLMK", "CHMF", "DSKY", "POLY", "YNDX", "AFKS", "LSRG", "LSNGP", "LKOH", "MTSS", "NVTK", "PIKK"]
-
 
 symbol = "SBER"
 df = pd.read_csv(f"./data/{symbol}.csv", sep=';', names=['date', 'price', 'change', 'cap'])
@@ -14,16 +14,6 @@ i=0
 # prices for 10 months
 prices = list(df['price'][i:i+10])
 # prices = util.rand_remove(prices)
-
-# gets all prices for 10 months (hardcoded)
-def get_all_prices() -> list:
-    all_prices = []
-    for symbol in symbols:
-        df = pd.read_csv(f"./data/{symbol}.csv", sep=';', names=['date', 'price', 'change', 'cap'])
-        all_prices.append(list(df['price'][i:i+10]))
-    return all_prices
-
-
 
 # recovery methods
 # - winsoring method
@@ -119,25 +109,87 @@ def WMA(data):
     return data_copy
 
 
-print(prices)
-print(WMA(prices))
+# print(prices)
+# print(WMA(prices))
 
+def std_deviation(orig_data: list, data: list):
+    n = len(data)
+    avg = sum(data) / n
+    summ = 0
+    for i in range(n):
+        summ += (data[i] - orig_data[i])**2
+    return ((1/n) * summ) ** 0.5
 
 def App():
 
     root = Tk()
     root.title("Начинающий Брокер")
-    root.geometry("500x500")
+    root.geometry("500x200")
     root.resizable(width=False, height=False)
-
-    def build_click():
-        print("logging")
 
     frame = Frame(root, bg=bg_color)
     frame.place(relwidth=1, relheight=1)
 
-    title = Label(frame, text="Пример", bg=bg_color)
+    def option_menu(data: list, default_value) -> StringVar:
+        variable = StringVar(frame)
+        variable.set(default_value)
+        OptionMenu(frame, variable, *data).pack()
+        return variable
+
+    symbol_variable      = option_menu(symbols, "Select Ticket")
+    recovery_variable    = option_menu(["Winsoring", "Linear approximation", "Correlation"], "Select Recovery Method")
+    antialising_variable = option_menu(["Moving Average", "Moving Average w/ Windowing"], "Select Anti-aliasing Method")
+
+    title = Label(frame, text="Select second ticker if you've selected Correlation recovery method.", bg=bg_color)
     title.pack()
+
+    symbol2_variable = option_menu(symbols, "Select Ticket")
+
+    def build_click():
+        symbol = symbol_variable.get()
+        symbol2 = symbol2_variable.get()
+        recovery = recovery_variable.get()
+        antialising = antialising_variable.get()
+
+        df = pd.read_csv(f"./data/{symbol}.csv", sep=';', names=['date', 'price', 'change', 'cap'])
+        # prices for 18 months
+        i=0
+        prices = util.rand_remove(list(df['price'][i:i+18]))
+
+        recovered_prices = []
+        if recovery == "Winsoring":
+            recovered_prices = winsoring(prices)
+        elif recovery == "Linear approximation":
+            recovered_prices = linear_approximation(prices)
+        elif recovery == "Correlation":
+            df = pd.read_csv(f"./data/{symbol}.csv", sep=';', names=['date', 'price', 'change', 'cap'])
+            # prices for 18 months
+            i=0
+            prices2 = util.rand_remove(list(df['price'][i:i+18]))
+            recovered_prices = correlation(prices, prices2)[0]
+
+        print(prices)
+        print(recovered_prices)
+
+        antialised_prices = []
+        if antialising == "Moving Average":
+            antialised_prices = MAW(recovered_prices, k=2)
+        elif antialising == "Moving Average w/ Windowing":
+            antialised_prices = WMA(recovered_prices)
+
+        # show what we've done
+        fig, axs = plt.subplots(3)
+        axs[0].set_title("Initial data")
+        axs[0].plot(range(len(prices)), prices, color="#CE7A60")
+        axs[1].set_title("Recovered data")
+        axs[1].plot(range(len(recovered_prices)), recovered_prices, color="#CE7A60")
+        axs[2].set_title("Antialised data")
+        axs[2].plot(range(len(antialised_prices)), antialised_prices, color="#FE7A60")
+
+        plt.text(0.5, 0.5, f"σ = {std_deviation(recovered_prices, antialised_prices)}")
+
+        fig.tight_layout()
+        plt.show()
 
     build_btn = Button(frame, text="Build", bg=bg_color, borderwidth=0, command=build_click)
     build_btn.pack()
@@ -145,5 +197,4 @@ def App():
     root.mainloop()
 
 if __name__ == "__main__":
-    # App()
-    pass
+    App()
